@@ -41,6 +41,8 @@ def animate(i):
     point.set_position([x, y])
     return point,
 
+# 
+
 # call the animator.  blit=True means only re-draw the parts that have changed.
 anim = animation.FuncAnimation(plt.gcf(), animate, init_func=init,
                                frames=100000, interval=1, blit=True)
