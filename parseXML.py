@@ -22,7 +22,6 @@ dest_country = '0'
 
 # get the num of ppl
 for country in root.findall('record'):
-
     origin_country = country[1].text
     dest_country = country[0].text
     origin_lati = 'NA'

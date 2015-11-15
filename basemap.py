@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import matplotlib
 matplotlib.rcParams['backend'] = "Qt4Agg"
+from parseExampleXML import exampleXML
+import pdb
+import math
 
 fig = plt.figure(1)
 # create Basemap instance for Robinson projection.
@@ -16,36 +19,69 @@ m.fillcontinents(color='0.8')
 # convert lon and lat to map coordinates
 x,y = m(0, 0)
 
+# read in XML
+array = exampleXML()
+
 # draw a point
-point = plt.text(x,y,'Name', fontsize=20)
-point2 = plt.text(x,y,'Name2', fontsize=20)
+points = []
+for i in array:
+    points.append(plt.text(x,y,str(i[0]), fontsize=20))
 
 # this is called every frame
 def init():
-    point.set_fontsize(0)
-    point2.set_fontsize(0)
-    return point,point2
+    for i in points:
+        i.set_fontsize(0)
+    return tuple(points)
 
-start_lon = -20.
-start_lat = 35.
-end_lon = 60.
-end_lat = 60.
+# calculate slopes
+slopes = []
+for i in array:
+    slopes.append((i[2][0] - i[1][0]) / (i[2][1] - i[1][1]))
 
-# get slope
-slope = (end_lat - start_lat) / (end_lon - start_lon)
+# calculate distance
+scales = []
+for i in array:
+    scales.append(math.sqrt((i[2][0] - i[1][0])**2 + (i[2][1] - i[1][1])**2)/500)
 
 # animation function.  This is called sequentially
+
 def animate(i):
-    x, y = m(i*1 + start_lon, (i*1) * slope + start_lat)
-    point.set_fontsize(12)
-    point.set_position([x, y])
-    point2.set_fontsize(12)
-    x2, y2 = m(i+10, i+10)
-    point2.set_position([x2,y2])
-    return point,point2
+    stop = False
+    for index in range(len(array)):
+        if array[index][2][0] > array[index][1][0] and array[index][2][1] > array[index][1][1]:
+            new_lat = scales[index]*i * abs(slopes[index]) + array[index][1][0]
+            new_lon = scales[index]*i + array[index][1][1] 
+            x, y = m(new_lon, new_lat)
+            if new_lat == array[index][2][0] and new_lon == array[index][2][1]:
+                stop = True
+        elif array[index][2][0] > array[index][1][0] and array[index][2][1] < array[index][1][1]:
+            new_lat = scales[index]*i * abs(slopes[index]) + array[index][1][0]
+            new_lon = scales[index]*-1*i + array[index][1][1]
+            x, y = m(new_lon, new_lat)
+            if new_lat == array[index][2][0] and new_lon == array[index][2][1]:
+                stop = True
+        elif array[index][2][0] < array[index][1][0] and array[index][2][1] > array[index][1][1]:
+            new_lat = scales[index]*-1*i * abs(slopes[index]) + array[index][1][0]
+            new_lon = scales[index]*i + array[index][1][1]
+            x, y = m(new_lon, new_lat)
+            if new_lat == array[index][2][0] and new_lon == array[index][2][1]:
+                stop = True
+        else:
+            new_lat = scales[index]*-1 * i * abs(slopes[index]) + array[index][1][0]
+            new_lon = scales[index]*-1 * i + array[index][1][1]
+            x, y = m(new_lon, new_lat)
+            if new_lat == array[index][2][0] and new_lon == array[index][2][1]:
+                stop = True
+        if stop:
+            points[index].set_fontsize(0)
+        else:
+            points[index].set_fontsize(12)
+            points[index].set_position([x, y])
+
+    return tuple(points)
 
 # call the animator.  blit=True means only re-draw the parts that have changed.
 anim = animation.FuncAnimation(plt.gcf(), animate, init_func=init,
-                               frames=int(abs(end_lon-start_lon)), interval=1, blit=True, repeat=False)
+                               frames=500, interval=1, blit=True, repeat=False)
 
 plt.show()
