@@ -20,6 +20,9 @@ $RECYCLE.BIN/
 # Emacs autosave
 *.py~
 
+# XML file (too big)
+*.XML
+
 # =========================
 # Operating System Files
 # =========================
